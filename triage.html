@@ -933,10 +933,10 @@ async function fetchTasks() {
   try {
     // Fetch tasks and projects in parallel
     const [tasksRes, projectsRes] = await Promise.all([
-      fetch('https://api.todoist.com/rest/v2/tasks', {
+      fetch('https://api.todoist.com/api/v1/tasks', {
         headers: { 'Authorization': `Bearer ${apiToken}` }
       }),
-      fetch('https://api.todoist.com/rest/v2/projects', {
+      fetch('https://api.todoist.com/api/v1/projects', {
         headers: { 'Authorization': `Bearer ${apiToken}` }
       })
     ]);
@@ -1338,12 +1338,11 @@ async function pushToTodoist() {
   for (const task of rankedTasks) {
     try {
       const datetime = `${today}T${task._scheduledTime}:00`;
-      const res = await fetch(`https://api.todoist.com/rest/v2/tasks/${task.id}`, {
+      const res = await fetch(`https://api.todoist.com/api/v1/tasks/${task.id}`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${apiToken}`,
-          'Content-Type': 'application/json',
-          'X-Request-Id': crypto.randomUUID()
+          'Content-Type': 'application/json'
         },
         body: JSON.stringify({ due_datetime: datetime, priority: task._priority })
       });
@@ -1355,14 +1354,13 @@ async function pushToTodoist() {
   // Clear due dates on deferred tasks
   for (const task of deferredTasks) {
     try {
-      const res = await fetch(`https://api.todoist.com/rest/v2/tasks/${task.id}`, {
+      const res = await fetch(`https://api.todoist.com/api/v1/tasks/${task.id}`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${apiToken}`,
           'Content-Type': 'application/json',
-          'X-Request-Id': crypto.randomUUID()
         },
-        body: JSON.stringify({ due_string: 'no date' })
+        body: JSON.stringify({ due: null })
       });
       if (!res.ok) failed++;
     } catch { failed++; }
@@ -1463,7 +1461,7 @@ async function toggleComplete(taskId) {
 
     // Mark complete in Todoist
     try {
-      await fetch(`https://api.todoist.com/rest/v2/tasks/${taskId}/close`, {
+      await fetch(`https://api.todoist.com/api/v1/tasks/${taskId}/close`, {
         method: 'POST',
         headers: { 'Authorization': `Bearer ${apiToken}` }
       });
@@ -1476,7 +1474,7 @@ async function toggleComplete(taskId) {
     showExecute();
 
     try {
-      await fetch(`https://api.todoist.com/rest/v2/tasks/${taskId}/reopen`, {
+      await fetch(`https://api.todoist.com/api/v1/tasks/${taskId}/reopen`, {
         method: 'POST',
         headers: { 'Authorization': `Bearer ${apiToken}` }
       });
