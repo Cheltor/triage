@@ -1,0 +1,1523 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Morning Triage</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,300&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #0c0c10;
+  --surface: #13131c;
+  --card: #181824;
+  --border: #252535;
+  --accent: #f0c040;
+  --red: #e05a5a;
+  --blue: #5ab4e0;
+  --text: #e8e8f2;
+  --muted: #5a5a7a;
+  --p1: #f0c040;
+  --p2: #5ab4e0;
+  --p3: #6a6a8a;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'DM Sans', sans-serif;
+  height: 100dvh;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.screen { display: none; flex-direction: column; height: 100dvh; overflow: hidden; }
+.screen.active { display: flex; }
+
+/* ── SETUP ── */
+#setup {
+  padding: 52px 28px 40px;
+  gap: 28px;
+  background: radial-gradient(ellipse at 15% 5%, #1e1535 0%, var(--bg) 60%);
+}
+
+.logo {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 56px;
+  letter-spacing: 5px;
+  line-height: 1;
+  color: var(--accent);
+  text-shadow: 0 0 48px rgba(240,192,64,0.25);
+}
+.logo-sub {
+  font-size: 11px;
+  color: var(--muted);
+  letter-spacing: 2.5px;
+  text-transform: uppercase;
+  margin-top: 4px;
+}
+
+.field { display: flex; flex-direction: column; gap: 8px; }
+.field label {
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  color: var(--muted);
+}
+.field input {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 15px 16px;
+  color: var(--text);
+  font-family: 'DM Sans', sans-serif;
+  font-size: 16px;
+  outline: none;
+  transition: border-color 0.2s, box-shadow 0.2s;
+  width: 100%;
+}
+.field input:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(240,192,64,0.08);
+}
+.field input::placeholder { color: var(--muted); }
+
+.hint {
+  font-size: 11px;
+  color: var(--muted);
+  line-height: 1.6;
+  padding: 12px 14px;
+  background: var(--surface);
+  border-radius: 10px;
+  border-left: 2px solid var(--accent);
+}
+.hint a { color: var(--accent); text-decoration: none; }
+
+.btn {
+  background: var(--accent);
+  color: #0c0c10;
+  border: none;
+  border-radius: 14px;
+  padding: 18px;
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 24px;
+  letter-spacing: 3px;
+  cursor: pointer;
+  transition: transform 0.15s, opacity 0.15s;
+  margin-top: auto;
+}
+.btn:active { transform: scale(0.97); opacity: 0.88; }
+.btn:disabled { opacity: 0.4; pointer-events: none; }
+
+.btn-ghost {
+  background: transparent;
+  color: var(--muted);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 16px;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 14px;
+  cursor: pointer;
+  transition: border-color 0.2s, color 0.2s;
+}
+.btn-ghost:active { border-color: var(--accent); color: var(--accent); }
+
+/* ── LOADING ── */
+#loading {
+  align-items: center;
+  justify-content: center;
+  gap: 18px;
+}
+.spinner {
+  width: 44px; height: 44px;
+  border: 2px solid var(--border);
+  border-top-color: var(--accent);
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+.loading-msg { font-size: 12px; color: var(--muted); letter-spacing: 1.5px; text-transform: uppercase; }
+
+/* ── TRIAGE ── */
+#triage {
+  background: radial-gradient(ellipse at 85% 95%, #151530 0%, var(--bg) 55%);
+}
+
+.triage-top {
+  padding: 20px 22px 10px;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+}
+.triage-label {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 30px;
+  letter-spacing: 4px;
+  color: var(--accent);
+  line-height: 1;
+}
+.triage-phase {
+  font-size: 11px;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  margin-top: 2px;
+}
+.round-info {
+  text-align: right;
+}
+.round-num {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 22px;
+  color: var(--text);
+  line-height: 1;
+}
+.round-total {
+  font-size: 10px;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.progress-track {
+  height: 2px;
+  background: var(--border);
+  margin: 10px 22px 0;
+  border-radius: 2px;
+  overflow: hidden;
+}
+.progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--accent), #ffd060);
+  border-radius: 2px;
+  transition: width 0.5s cubic-bezier(0.4,0,0.2,1);
+}
+
+.instruction {
+  text-align: center;
+  padding: 10px 22px 4px;
+  font-size: 12px;
+  color: var(--muted);
+  letter-spacing: 0.3px;
+  min-height: 32px;
+  line-height: 1.5;
+}
+
+.cards-wrap {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 6px 18px 10px;
+  overflow: hidden;
+}
+
+.task-card {
+  background: var(--card);
+  border: 1.5px solid var(--border);
+  border-radius: 18px;
+  padding: 16px 18px;
+  cursor: pointer;
+  transition: all 0.22s cubic-bezier(0.4,0,0.2,1);
+  position: relative;
+  overflow: hidden;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  max-height: 120px;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+.task-card::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, rgba(255,255,255,0.025) 0%, transparent 50%);
+  pointer-events: none;
+}
+
+.task-card.selected {
+  border-color: var(--accent);
+  background: #1c1c10;
+  box-shadow: 0 0 0 1px rgba(240,192,64,0.3), 0 6px 28px rgba(240,192,64,0.12);
+  transform: scale(1.018);
+}
+
+.task-card.fading {
+  opacity: 0.2;
+  transform: scale(0.96);
+}
+
+.task-card.animating-out {
+  transition: all 0.35s ease;
+  opacity: 0;
+  transform: translateX(60px) scale(0.9);
+}
+
+.card-project {
+  font-size: 9px;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  color: var(--muted);
+  margin-bottom: 5px;
+}
+.card-name {
+  font-size: 15px;
+  font-weight: 500;
+  line-height: 1.45;
+  color: var(--text);
+}
+.card-overdue {
+  font-size: 10px;
+  color: var(--red);
+  margin-top: 5px;
+  font-weight: 500;
+}
+
+.check-mark {
+  position: absolute;
+  top: 13px;
+  right: 15px;
+  width: 22px; height: 22px;
+  background: var(--accent);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  color: #0c0c10;
+  font-weight: 700;
+  opacity: 0;
+  transform: scale(0.4);
+  transition: opacity 0.2s, transform 0.25s cubic-bezier(0.175,0.885,0.32,1.275);
+}
+.task-card.selected .check-mark {
+  opacity: 1;
+  transform: scale(1);
+}
+
+/* SWIPE BUTTONS */
+.swipe-row {
+  display: flex;
+  gap: 10px;
+  padding: 6px 18px 20px;
+}
+
+.swipe-btn {
+  flex: 1;
+  padding: 14px 8px;
+  border-radius: 14px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  transition: all 0.15s;
+}
+.swipe-btn:active { transform: scale(0.95); }
+
+.swipe-btn.lower {
+  border-color: rgba(90,180,224,0.4);
+}
+.swipe-btn.lower:active { background: rgba(90,180,224,0.08); }
+.swipe-btn.lower .s-arrow { color: var(--blue); font-size: 20px; }
+.swipe-btn.lower .s-label { font-size: 9px; color: var(--blue); text-transform: uppercase; letter-spacing: 1px; opacity: 0.8; }
+
+.swipe-btn.higher {
+  border-color: rgba(224,90,90,0.4);
+}
+.swipe-btn.higher:active { background: rgba(224,90,90,0.08); }
+.swipe-btn.higher .s-arrow { color: var(--red); font-size: 20px; }
+.swipe-btn.higher .s-label { font-size: 9px; color: var(--red); text-transform: uppercase; letter-spacing: 1px; opacity: 0.8; }
+
+.swipe-btn .s-desc {
+  font-size: 10px;
+  color: var(--muted);
+  text-align: center;
+  line-height: 1.3;
+  padding: 0 4px;
+}
+
+/* ── SCHEDULE SCREEN ── */
+#schedule {
+  padding: 48px 26px 40px;
+  gap: 28px;
+  background: radial-gradient(ellipse at 80% 10%, #151530 0%, var(--bg) 55%);
+}
+
+.sched-title {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 44px;
+  letter-spacing: 4px;
+  color: var(--accent);
+  line-height: 1;
+}
+.sched-sub {
+  font-size: 13px;
+  color: var(--muted);
+  margin-top: 4px;
+  line-height: 1.5;
+}
+
+.preview-count {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 14px 16px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.preview-count .num {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 36px;
+  color: var(--accent);
+  line-height: 1;
+}
+.preview-count .desc {
+  font-size: 13px;
+  color: var(--muted);
+  line-height: 1.4;
+}
+
+.time-pair {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.time-calc {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 12px 14px;
+  font-size: 12px;
+  color: var(--muted);
+  line-height: 1.6;
+  min-height: 44px;
+}
+.time-calc span { color: var(--accent); font-weight: 600; }
+
+/* ── RESULTS ── */
+#results {
+  background: radial-gradient(ellipse at 50% 0%, #101828 0%, var(--bg) 50%);
+}
+
+.results-top {
+  padding: 28px 22px 14px;
+}
+.results-title {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 44px;
+  letter-spacing: 4px;
+  color: var(--accent);
+  line-height: 1;
+}
+.results-sub { font-size: 13px; color: var(--muted); margin-top: 3px; }
+
+.ranked-list {
+  flex: 1;
+  overflow-y: auto;
+  padding: 4px 18px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+
+.ranked-item {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 13px;
+  padding: 13px 15px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  animation: slideUp 0.3s ease both;
+}
+.ranked-item:nth-child(1) { animation-delay: 0.05s; }
+.ranked-item:nth-child(2) { animation-delay: 0.1s; }
+.ranked-item:nth-child(3) { animation-delay: 0.15s; }
+.ranked-item:nth-child(4) { animation-delay: 0.2s; }
+.ranked-item:nth-child(5) { animation-delay: 0.25s; }
+.ranked-item:nth-child(n+6) { animation-delay: 0.3s; }
+
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.r-num {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 26px;
+  min-width: 32px;
+  text-align: center;
+  line-height: 1;
+}
+.r-info { flex: 1; min-width: 0; }
+.r-name {
+  font-size: 13px;
+  font-weight: 500;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  line-height: 1.3;
+}
+.r-time { font-size: 11px; color: var(--muted); margin-top: 2px; }
+
+.r-tag {
+  font-size: 9px;
+  font-weight: 600;
+  padding: 3px 7px;
+  border-radius: 6px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  white-space: nowrap;
+}
+.tag-p1 { background: rgba(240,192,64,0.12); color: var(--p1); }
+.tag-p2 { background: rgba(90,180,224,0.12); color: var(--p2); }
+.tag-p3 { background: rgba(106,106,138,0.15); color: var(--p3); }
+
+.results-actions {
+  padding: 12px 18px 28px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.btn-confirm {
+  background: var(--accent);
+  color: #0c0c10;
+  border: none;
+  border-radius: 14px;
+  padding: 18px;
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 22px;
+  letter-spacing: 3px;
+  cursor: pointer;
+  transition: transform 0.15s, opacity 0.15s;
+}
+.btn-confirm:active { transform: scale(0.97); opacity: 0.88; }
+.btn-confirm:disabled { opacity: 0.4; pointer-events: none; }
+
+/* Status messages */
+.status-bar {
+  padding: 10px 18px;
+  font-size: 12px;
+  text-align: center;
+  min-height: 36px;
+  color: var(--muted);
+}
+.status-bar.success { color: #60d080; }
+.status-bar.error { color: var(--red); }
+
+/* ── EXECUTE SCREEN ── */
+#execute {
+  background: radial-gradient(ellipse at 50% 0%, #0a1a10 0%, var(--bg) 50%);
+}
+
+.execute-top {
+  padding: 24px 22px 12px;
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+}
+.execute-title {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 36px;
+  letter-spacing: 4px;
+  color: var(--accent);
+  line-height: 1;
+}
+.execute-progress {
+  font-size: 12px;
+  color: var(--muted);
+  text-align: right;
+  line-height: 1.4;
+}
+.execute-progress span { color: var(--text); font-weight: 600; }
+
+.execute-list {
+  flex: 1;
+  overflow-y: auto;
+  padding: 4px 18px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.exec-item {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 14px 16px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  cursor: pointer;
+  transition: all 0.25s ease;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+.exec-item:active { transform: scale(0.98); }
+
+.exec-item.done {
+  opacity: 0.35;
+  border-color: transparent;
+}
+
+.exec-item.done .exec-name {
+  text-decoration: line-through;
+  color: var(--muted);
+}
+
+.exec-item.completing {
+  animation: completeFlash 0.3s ease;
+}
+
+@keyframes completeFlash {
+  0% { background: var(--card); }
+  50% { background: #1a2e1a; border-color: #3a6a3a; }
+  100% { background: var(--card); }
+}
+
+.exec-check {
+  width: 28px; height: 28px;
+  border-radius: 50%;
+  border: 2px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: all 0.2s;
+  font-size: 13px;
+}
+
+.exec-item.done .exec-check {
+  background: #2a4a2a;
+  border-color: #3a6a3a;
+  color: #60c060;
+}
+
+.exec-info { flex: 1; min-width: 0; }
+.exec-name {
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 1.3;
+  transition: color 0.2s;
+}
+.exec-meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 3px;
+}
+.exec-time { font-size: 11px; color: var(--muted); }
+.exec-tag {
+  font-size: 9px;
+  font-weight: 600;
+  padding: 2px 6px;
+  border-radius: 4px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.execute-footer {
+  padding: 12px 18px 28px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.all-done-banner {
+  display: none;
+  background: #0f2010;
+  border: 1px solid #2a5a2a;
+  border-radius: 12px;
+  padding: 14px 16px;
+  text-align: center;
+  color: #60c060;
+  font-size: 14px;
+  font-weight: 500;
+  margin-bottom: 4px;
+}
+
+/* ── DONE SCREEN ── */
+#done {
+  align-items: center;
+  justify-content: center;
+  gap: 20px;
+  padding: 40px;
+  text-align: center;
+  background: radial-gradient(ellipse at 50% 40%, #1a2010 0%, var(--bg) 60%);
+}
+
+.done-icon { font-size: 64px; animation: popIn 0.5s cubic-bezier(0.175,0.885,0.32,1.275); }
+@keyframes popIn {
+  from { transform: scale(0); opacity: 0; }
+  to { transform: scale(1); opacity: 1; }
+}
+.done-title {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 52px;
+  letter-spacing: 5px;
+  color: var(--accent);
+}
+.done-sub { font-size: 14px; color: var(--muted); line-height: 1.6; max-width: 280px; }
+.done-btn { margin-top: 16px; }
+</style>
+</head>
+<body>
+
+<!-- SETUP -->
+<div id="setup" class="screen active">
+  <div>
+    <div class="logo">TRIAGE</div>
+    <div class="logo-sub">Morning Priority Engine</div>
+  </div>
+
+  <div class="field">
+    <label>Todoist API Token</label>
+    <input type="password" id="apiToken" placeholder="Your API token" autocomplete="off">
+  </div>
+
+  <div class="hint">
+    Get your token at <a href="https://app.todoist.com/app/settings/integrations/developer" target="_blank">todoist.com → Settings → Integrations</a>
+  </div>
+
+  <div id="resumeBanner" style="display:none; background:var(--card); border:1px solid var(--accent); border-radius:12px; padding:14px 16px; align-items:center; gap:12px;">
+    <div style="font-size:22px;">☀️</div>
+    <div style="flex:1;">
+      <div style="font-size:13px; font-weight:500; color:var(--accent);">Triage saved from this morning</div>
+      <div style="font-size:11px; color:var(--muted); margin-top:2px;"><span id="resumeCount">0</span> tasks ranked — ready to schedule</div>
+    </div>
+    <div style="display:flex; flex-direction:column; gap:6px; align-items:flex-end;">
+      <button onclick="resumeToExecute()" style="background:var(--accent); color:#0c0c10; border:none; border-radius:8px; padding:8px 14px; font-family:Bebas Neue,sans-serif; font-size:16px; letter-spacing:1px; cursor:pointer;">VIEW TODAY</button>
+      <button onclick="resumeToSchedule()" style="background:transparent; color:var(--muted); border:1px solid var(--border); border-radius:8px; padding:5px 10px; font-size:11px; cursor:pointer;">reschedule</button>
+    </div>
+  </div>
+
+  <button class="btn" id="startBtn" onclick="startTriage()">BEGIN TRIAGE</button>
+</div>
+
+<!-- LOADING -->
+<div id="loading" class="screen">
+  <div class="spinner"></div>
+  <div class="loading-msg">Fetching tasks...</div>
+</div>
+
+<!-- TRIAGE -->
+<div id="triage" class="screen">
+  <div class="triage-top">
+    <div>
+      <div class="triage-label" id="triageLabel">FILTER</div>
+      <div class="triage-phase" id="triagePhase">Is this a today task?</div>
+    </div>
+    <div class="round-info">
+      <div class="round-num" id="roundNum">1</div>
+      <div class="round-total" id="roundTotal">of ?</div>
+    </div>
+  </div>
+
+  <div class="progress-track">
+    <div class="progress-fill" id="progressFill" style="width:0%"></div>
+  </div>
+
+  <div class="instruction" id="instruction">Swipe right to do today · left to defer</div>
+
+  <div class="cards-wrap" id="cardsWrap"></div>
+
+  <!-- Filter phase buttons -->
+  <div class="swipe-row" id="filterRow">
+    <button class="swipe-btn higher" onclick="swipeDefer()">
+      <div class="s-arrow">←</div>
+      <div class="s-label">Defer</div>
+      <div class="s-desc">Remove due date</div>
+    </button>
+    <button class="swipe-btn lower" onclick="swipeToday()">
+      <div class="s-arrow">→</div>
+      <div class="s-label">Today</div>
+      <div class="s-desc">Add to ranking</div>
+    </button>
+  </div>
+
+  <!-- Rank phase buttons -->
+  <div class="swipe-row" id="swipeRow" style="display:none">
+    <button class="swipe-btn higher" onclick="swipeHigher()">
+      <div class="s-arrow">←</div>
+      <div class="s-label">Higher</div>
+      <div class="s-desc">Others rank above</div>
+    </button>
+    <button class="swipe-btn lower" onclick="swipeLower()">
+      <div class="s-arrow">→</div>
+      <div class="s-label">Lower</div>
+      <div class="s-desc">Others rank below</div>
+    </button>
+  </div>
+</div>
+
+<!-- SCHEDULE -->
+<div id="schedule" class="screen">
+  <div class="sched-title">SCHEDULE</div>
+  <div class="sched-sub">When's your open block today? Tasks will fill it evenly.</div>
+
+  <div class="preview-count">
+    <div class="num" id="schedTaskCount">0</div>
+    <div class="desc">tasks to schedule<br><span style="font-size:11px;color:var(--muted)">Ranked by your triage order</span></div>
+  </div>
+
+  <div class="field">
+    <label>Block Start</label>
+    <input type="time" id="blockStart" value="13:00">
+  </div>
+
+  <div class="field">
+    <label>Block End</label>
+    <input type="time" id="blockEnd" value="15:00">
+  </div>
+
+  <div class="time-calc" id="timeCalc">Enter times above to see the schedule</div>
+
+  <button class="btn" id="scheduleBtn" onclick="goToResults()">PREVIEW SCHEDULE</button>
+</div>
+
+<!-- RESULTS -->
+<div id="results" class="screen">
+  <div class="results-top">
+    <div class="results-title">YOUR DAY</div>
+    <div class="results-sub" id="resultsSub">Ranked & scheduled</div>
+  </div>
+
+  <div class="ranked-list" id="rankedList"></div>
+
+  <div class="status-bar" id="statusBar"></div>
+
+  <div class="results-actions">
+    <button class="btn-confirm" id="confirmBtn" onclick="pushToTodoist()">PUSH TO TODOIST</button>
+    <button class="btn-ghost" onclick="showScreen('schedule')">← Adjust block</button>
+  </div>
+</div>
+
+<!-- EXECUTE -->
+<div id="execute" class="screen">
+  <div class="execute-top">
+    <div>
+      <div class="execute-title">TODAY</div>
+      <div style="font-size:11px; color:var(--muted); letter-spacing:1px; margin-top:2px;">TAP TO COMPLETE</div>
+    </div>
+    <div class="execute-progress">
+      <div><span id="doneCount">0</span> of <span id="totalCount">0</span> done</div>
+      <div style="margin-top:2px;" id="execDate"></div>
+    </div>
+  </div>
+
+  <div class="all-done-banner" id="allDoneBanner">
+    🎉 All tasks complete — great work!
+  </div>
+
+  <div class="execute-list" id="executeList"></div>
+
+  <div class="execute-footer">
+    <div class="status-bar" id="execStatusBar"></div>
+    <button class="btn-ghost" onclick="showScreen('setup')" style="font-size:12px; padding:12px;">↺ Back to triage</button>
+  </div>
+</div>
+
+<!-- DONE -->
+<div id="done" class="screen">
+  <div class="done-icon">✓</div>
+  <div class="done-title">ALL SET</div>
+  <div class="done-sub" id="doneMsg">Your tasks are scheduled in Todoist. Time to get to work.</div>
+  <button class="btn done-btn" onclick="resetApp()">NEW TRIAGE</button>
+</div>
+
+<script>
+// ── STATE ──
+let apiToken = '';
+let allTasks = [];
+let rankedTasks = []; // final ordered list
+let projects = {};
+
+// Tournament state
+let remaining = []; // tasks yet to be fully sorted
+let sortedGroups = []; // array of arrays, each group sorted relative to each other
+let currentThree = [];
+let selected = null;
+let roundCount = 0;
+let totalRounds = 0;
+
+// Touch/swipe support
+let touchStartX = 0;
+
+// ── HELPERS ──
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
+
+function saveRankedTasks() {
+  const today = new Date().toISOString().split('T')[0];
+  localStorage.setItem('triage_ranked', JSON.stringify(rankedTasks));
+  localStorage.setItem('triage_date', today);
+}
+
+function loadSavedRanked() {
+  const today = new Date().toISOString().split('T')[0];
+  const savedDate = localStorage.getItem('triage_date');
+  if (savedDate !== today) {
+    localStorage.removeItem('triage_ranked');
+    localStorage.removeItem('triage_date');
+    return null;
+  }
+  const saved = localStorage.getItem('triage_ranked');
+  return saved ? JSON.parse(saved) : null;
+}
+
+function isOverdue(task) {
+  if (!task.due) return false;
+  const d = task.due.date;
+  const today = new Date().toISOString().split('T')[0];
+  return d < today;
+}
+
+function formatDue(task) {
+  if (!task.due) return '';
+  if (isOverdue(task)) {
+    return `Overdue: ${task.due.date}`;
+  }
+  return '';
+}
+
+// ── SETUP ──
+document.getElementById('apiToken').addEventListener('input', e => {
+  apiToken = e.target.value.trim();
+});
+
+window.onload = () => {
+  const saved = localStorage.getItem('triage_token');
+  if (saved) {
+    document.getElementById('apiToken').value = saved;
+    apiToken = saved;
+  }
+
+  const savedRanked = loadSavedRanked();
+  if (savedRanked && savedRanked.length > 0) {
+    rankedTasks = savedRanked;
+    document.getElementById('resumeBanner').style.display = 'flex';
+    document.getElementById('resumeCount').textContent = savedRanked.length;
+
+    // If already pushed today, show execute view immediately
+    const hasPushed = loadExecuteState();
+    if (hasPushed) {
+      showExecute();
+      return;
+    }
+  }
+};
+
+async function startTriage() {
+  if (!apiToken) { alert('Please enter your Todoist API token'); return; }
+  localStorage.setItem('triage_token', apiToken);
+  showScreen('loading');
+  await fetchTasks();
+}
+
+// ── FETCH TASKS ──
+async function fetchTasks() {
+  try {
+    // Fetch tasks and projects in parallel
+    const [tasksRes, projectsRes] = await Promise.all([
+      fetch('https://api.todoist.com/rest/v2/tasks', {
+        headers: { 'Authorization': `Bearer ${apiToken}` }
+      }),
+      fetch('https://api.todoist.com/rest/v2/projects', {
+        headers: { 'Authorization': `Bearer ${apiToken}` }
+      })
+    ]);
+
+    if (!tasksRes.ok) {
+      throw new Error(tasksRes.status === 401 ? 'Invalid API token' : 'Failed to fetch tasks');
+    }
+
+    const tasks = await tasksRes.json();
+    const projectList = await projectsRes.json();
+
+    projectList.forEach(p => projects[p.id] = p.name);
+
+    const today = new Date().toISOString().split('T')[0];
+
+    // Filter: due today or overdue, no specific time set
+    allTasks = tasks.filter(t => {
+      if (!t.due) return false;
+      const dueDate = t.due.date;
+      // Has specific time = skip (already scheduled)
+      if (t.due.datetime) return false;
+      // Due today or overdue
+      return dueDate <= today;
+    });
+
+    if (allTasks.length === 0) {
+      alert('No tasks due today or overdue (without a specific time). Nothing to triage!');
+      showScreen('setup');
+      return;
+    }
+
+    showScreen('triage');
+    initFilter();
+
+  } catch (err) {
+    alert('Error: ' + err.message);
+    showScreen('setup');
+  }
+}
+
+// ── PHASE 1: FILTER (swipe right=today, left=defer) ──
+let filterQueue = [];   // tasks to swipe through
+let todayTasks = [];    // swiped right
+let deferredTasks = []; // swiped left
+let filterPhase = true;
+
+// ── PHASE 2: RANK (tournament sort) ──
+let compareQueue = [];
+let insertionList = [];
+
+function initFilter() {
+  filterQueue = [...allTasks].sort(() => Math.random() - 0.5);
+  todayTasks = [];
+  deferredTasks = [];
+  filterPhase = true;
+  roundCount = 0;
+  totalRounds = allTasks.length;
+
+  document.getElementById('triageLabel').textContent = 'FILTER';
+  document.getElementById('triagePhase').textContent = 'Is this a today task?';
+  document.getElementById('filterRow').style.display = 'flex';
+  document.getElementById('swipeRow').style.display = 'none';
+  document.getElementById('instruction').textContent = 'Swipe right to do today · left to defer';
+
+  showNextFilter();
+}
+
+function showNextFilter() {
+  updateProgress();
+
+  if (filterQueue.length === 0) {
+    // Filter done — move to rank phase or finish
+    if (todayTasks.length === 0) {
+      alert('No tasks marked for today. Nothing to rank!');
+      showScreen('setup');
+      return;
+    }
+    if (todayTasks.length === 1) {
+      rankedTasks = [...todayTasks];
+      saveRankedTasks();
+      document.getElementById('schedTaskCount').textContent = rankedTasks.length;
+      showScreen('schedule');
+      return;
+    }
+    initTournament();
+    return;
+  }
+
+  const task = filterQueue[0];
+  renderSingleCard(task);
+  roundCount++;
+}
+
+function renderSingleCard(task) {
+  const wrap = document.getElementById('cardsWrap');
+  const proj = projects[task.project_id] || '';
+  const overdue = isOverdue(task);
+
+  wrap.innerHTML = `
+    <div class="task-card filter-card" id="filterCard"
+      style="max-height:none; flex:1; cursor:default;">
+      ${proj ? `<div class="card-project">${proj}</div>` : ''}
+      <div class="card-name" style="font-size:18px; line-height:1.5;">${task.content}</div>
+      ${overdue ? `<div class="card-overdue">⚑ Overdue</div>` : ''}
+    </div>
+  `;
+
+  // Touch swipe on the card itself
+  const card = document.getElementById('filterCard');
+  let startX = 0;
+  card.addEventListener('touchstart', e => { startX = e.touches[0].clientX; }, {passive:true});
+  card.addEventListener('touchend', e => {
+    const dx = e.changedTouches[0].clientX - startX;
+    if (dx > 50) swipeToday();
+    else if (dx < -50) swipeDefer();
+  }, {passive:true});
+}
+
+function swipeToday() {
+  const task = filterQueue.shift();
+  todayTasks.push(task);
+  animateSingleCard('right', showNextFilter);
+}
+
+function swipeDefer() {
+  const task = filterQueue.shift();
+  deferredTasks.push(task);
+  animateSingleCard('left', showNextFilter);
+}
+
+function animateSingleCard(dir, cb) {
+  const card = document.getElementById('filterCard');
+  if (!card) { cb(); return; }
+  card.style.transition = 'transform 0.3s ease, opacity 0.3s ease';
+  card.style.transform = dir === 'right' ? 'translateX(110%) rotate(8deg)' : 'translateX(-110%) rotate(-8deg)';
+  card.style.opacity = '0';
+  setTimeout(cb, 320);
+}
+
+// ── TOURNAMENT SORT ──
+function initTournament() {
+  filterPhase = false;
+  insertionList = [];
+  compareQueue = [...todayTasks];
+  roundCount = 0;
+  totalRounds = Math.ceil(todayTasks.length * Math.log2(todayTasks.length + 1));
+
+  document.getElementById('triageLabel').textContent = 'RANK';
+  document.getElementById('triagePhase').textContent = 'What\'s more important?';
+  document.getElementById('filterRow').style.display = 'none';
+  document.getElementById('instruction').textContent = 'Tap the task you\'d tackle first';
+
+  nextRound();
+}
+
+function nextRound() {
+  roundCount++;
+  updateProgress();
+
+  if (compareQueue.length === 0) {
+    rankedTasks = [...insertionList];
+    saveRankedTasks();
+    document.getElementById('schedTaskCount').textContent = rankedTasks.length;
+    showScreen('schedule');
+    return;
+  }
+
+  const newTask = compareQueue.shift();
+
+  if (insertionList.length === 0) {
+    insertionList.push(newTask);
+    nextRound();
+    return;
+  }
+
+  if (insertionList.length === 1) {
+    currentThree = [newTask, insertionList[0]];
+    showTwoComparison(newTask, insertionList[0]);
+    return;
+  }
+
+  const mid = Math.floor(insertionList.length / 2);
+  const refs = [insertionList[0], insertionList[mid]].filter((t, i, a) =>
+    a.findIndex(x => x.id === t.id) === i
+  );
+
+  if (refs.length < 2) {
+    showTwoComparison(newTask, insertionList[0]);
+    return;
+  }
+
+  currentThree = [newTask, refs[0], refs[1]];
+  selected = null;
+  renderCards(currentThree);
+  document.getElementById('instruction').textContent = 'Tap the task you\'d tackle first';
+  document.getElementById('swipeRow').style.display = 'none';
+}
+
+function showTwoComparison(taskA, taskB) {
+  currentThree = [taskA, taskB];
+  selected = null;
+  renderCards([taskA, taskB]);
+  document.getElementById('instruction').textContent = 'Tap the higher priority task';
+  document.getElementById('swipeRow').style.display = 'none';
+}
+
+function renderCards(tasks) {
+  const wrap = document.getElementById('cardsWrap');
+  wrap.innerHTML = '';
+  tasks.forEach((task, i) => {
+    const proj = projects[task.project_id] || '';
+    const overdue = isOverdue(task);
+    wrap.innerHTML += `
+      <div class="task-card" id="card-${i}" onclick="selectCard(${i})" data-idx="${i}">
+        ${proj ? `<div class="card-project">${proj}</div>` : ''}
+        <div class="card-name">${task.content}</div>
+        ${overdue ? `<div class="card-overdue">⚑ Overdue</div>` : ''}
+        <div class="check-mark">✓</div>
+      </div>
+    `;
+  });
+
+  wrap.addEventListener('touchstart', e => { touchStartX = e.touches[0].clientX; }, {passive: true});
+  wrap.addEventListener('touchend', e => {
+    if (!selected) return;
+    const dx = e.changedTouches[0].clientX - touchStartX;
+    if (Math.abs(dx) > 50) {
+      if (dx < 0) swipeHigher();
+      else swipeLower();
+    }
+  }, {passive: true});
+}
+
+function selectCard(idx) {
+  selected = idx;
+  document.querySelectorAll('.task-card').forEach((c, i) => {
+    c.classList.toggle('selected', i === idx);
+    c.classList.toggle('fading', i !== idx);
+  });
+
+  if (currentThree.length === 2) {
+    const selectedTask = currentThree[idx];
+    const otherTask = currentThree[1 - idx];
+    insertTask(selectedTask, true, [otherTask]);
+    setTimeout(nextRound, 350);
+    return;
+  }
+
+  document.getElementById('instruction').textContent = '← Others rank higher  |  Others rank lower →';
+  document.getElementById('swipeRow').style.display = 'flex';
+}
+
+function swipeHigher() {
+  if (selected === null) return;
+  const selectedTask = currentThree[selected];
+  const others = currentThree.filter((_, i) => i !== selected);
+  insertTask(selectedTask, false, others);
+  animateOut(() => nextRound());
+}
+
+function swipeLower() {
+  if (selected === null) return;
+  const selectedTask = currentThree[selected];
+  const others = currentThree.filter((_, i) => i !== selected);
+  insertTask(selectedTask, true, others);
+  animateOut(() => nextRound());
+}
+
+function insertTask(task, isHigher, refs) {
+  if (insertionList.length === 0) {
+    insertionList.push(task);
+    return;
+  }
+  if (isHigher) {
+    let insertPos = insertionList.length;
+    for (const ref of refs) {
+      const refIdx = insertionList.findIndex(t => t.id === ref.id);
+      if (refIdx !== -1 && refIdx < insertPos) insertPos = refIdx;
+    }
+    insertionList.splice(insertPos, 0, task);
+  } else {
+    let insertPos = 0;
+    for (const ref of refs) {
+      const refIdx = insertionList.findIndex(t => t.id === ref.id);
+      if (refIdx !== -1 && refIdx + 1 > insertPos) insertPos = refIdx + 1;
+    }
+    insertionList.splice(insertPos, 0, task);
+  }
+}
+
+function animateOut(cb) {
+  const cards = document.querySelectorAll('.task-card');
+  cards.forEach(c => c.classList.add('animating-out'));
+  setTimeout(cb, 380);
+}
+
+function updateProgress() {
+  const pct = Math.min(100, Math.round((roundCount / totalRounds) * 100));
+  document.getElementById('progressFill').style.width = pct + '%';
+  document.getElementById('roundNum').textContent = roundCount;
+  document.getElementById('roundTotal').textContent = `of ~${totalRounds}`;
+}
+
+// ── SCHEDULE SCREEN ──
+document.getElementById('blockStart').addEventListener('change', updateTimeCalc);
+document.getElementById('blockEnd').addEventListener('change', updateTimeCalc);
+
+function updateTimeCalc() {
+  const start = document.getElementById('blockStart').value;
+  const end = document.getElementById('blockEnd').value;
+  const count = rankedTasks.length;
+  if (!start || !end || count === 0) return;
+
+  const [sh, sm] = start.split(':').map(Number);
+  const [eh, em] = end.split(':').map(Number);
+  const totalMin = (eh * 60 + em) - (sh * 60 + sm);
+
+  if (totalMin <= 0) {
+    document.getElementById('timeCalc').innerHTML = '<span style="color:var(--red)">End must be after start</span>';
+    return;
+  }
+
+  const interval = Math.floor(totalMin / count);
+  document.getElementById('timeCalc').innerHTML =
+    `<span>${count}</span> tasks · <span>${interval} min</span> each · ${formatTime(sh, sm)} → ${formatTime(eh, em)}`;
+}
+
+function formatTime(h, m) {
+  const ampm = h >= 12 ? 'pm' : 'am';
+  const h12 = h % 12 || 12;
+  return `${h12}:${String(m).padStart(2,'0')}${ampm}`;
+}
+
+function goToResults() {
+  const start = document.getElementById('blockStart').value;
+  const end = document.getElementById('blockEnd').value;
+  if (!start || !end) { alert('Please set start and end times'); return; }
+
+  const [sh, sm] = start.split(':').map(Number);
+  const [eh, em] = end.split(':').map(Number);
+  const totalMin = (eh * 60 + em) - (sh * 60 + sm);
+  if (totalMin <= 0) { alert('End time must be after start time'); return; }
+
+  const count = rankedTasks.length;
+  const interval = Math.floor(totalMin / count);
+  const third = Math.ceil(count / 3);
+
+  const list = document.getElementById('rankedList');
+  list.innerHTML = '';
+  document.getElementById('statusBar').textContent = '';
+
+  rankedTasks.forEach((task, i) => {
+    const slotMin = (sh * 60 + sm) + (i * interval);
+    const slotH = Math.floor(slotMin / 60);
+    const slotM = slotMin % 60;
+    task._scheduledTime = `${String(slotH).padStart(2,'0')}:${String(slotM).padStart(2,'0')}`;
+
+    let priority, tagClass, tagLabel, numColor;
+    if (i < third) {
+      priority = 1; tagClass = 'tag-p1'; tagLabel = 'P1'; numColor = 'var(--p1)';
+    } else if (i < third * 2) {
+      priority = 2; tagClass = 'tag-p2'; tagLabel = 'P2'; numColor = 'var(--p2)';
+    } else {
+      priority = 3; tagClass = 'tag-p3'; tagLabel = 'P3'; numColor = 'var(--p3)';
+    }
+    task._priority = priority;
+
+    list.innerHTML += `
+      <div class="ranked-item" style="animation-delay:${i * 0.04}s">
+        <div class="r-num" style="color:${numColor}">${i + 1}</div>
+        <div class="r-info">
+          <div class="r-name">${task.content}</div>
+          <div class="r-time">${formatTime(slotH, slotM)}</div>
+        </div>
+        <div class="r-tag ${tagClass}">${tagLabel}</div>
+      </div>
+    `;
+  });
+
+  document.getElementById('resultsSub').textContent =
+    `${count} tasks · ${formatTime(sh, sm)}–${formatTime(eh, em)}`;
+
+  showScreen('results');
+}
+
+// ── PUSH TO TODOIST ──
+async function pushToTodoist() {
+  const btn = document.getElementById('confirmBtn');
+  const status = document.getElementById('statusBar');
+  btn.disabled = true;
+  btn.textContent = 'PUSHING...';
+  status.textContent = '';
+  status.className = 'status-bar';
+
+  const today = new Date().toISOString().split('T')[0];
+  let success = 0, failed = 0;
+
+  // Update ranked tasks with scheduled times + priority
+  for (const task of rankedTasks) {
+    try {
+      const datetime = `${today}T${task._scheduledTime}:00`;
+      const res = await fetch(`https://api.todoist.com/rest/v2/tasks/${task.id}`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${apiToken}`,
+          'Content-Type': 'application/json',
+          'X-Request-Id': crypto.randomUUID()
+        },
+        body: JSON.stringify({ due_datetime: datetime, priority: task._priority })
+      });
+      if (res.ok) success++;
+      else failed++;
+    } catch { failed++; }
+  }
+
+  // Clear due dates on deferred tasks
+  for (const task of deferredTasks) {
+    try {
+      const res = await fetch(`https://api.todoist.com/rest/v2/tasks/${task.id}`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${apiToken}`,
+          'Content-Type': 'application/json',
+          'X-Request-Id': crypto.randomUUID()
+        },
+        body: JSON.stringify({ due_string: 'no date' })
+      });
+      if (!res.ok) failed++;
+    } catch { failed++; }
+  }
+
+  if (failed === 0) {
+    saveExecuteState();
+    showExecute();
+  } else {
+    status.textContent = `${success} updated · ${failed} failed. Check token permissions.`;
+    status.className = 'status-bar error';
+    btn.disabled = false;
+    btn.textContent = 'RETRY';
+  }
+}
+
+// ── EXECUTE (mid-day check-off) ──
+let completedIds = new Set();
+
+function saveExecuteState() {
+  const today = new Date().toISOString().split('T')[0];
+  localStorage.setItem('triage_pushed', 'true');
+  localStorage.setItem('triage_pushed_date', today);
+  localStorage.setItem('triage_completed', JSON.stringify([...completedIds]));
+}
+
+function loadExecuteState() {
+  const today = new Date().toISOString().split('T')[0];
+  const pushedDate = localStorage.getItem('triage_pushed_date');
+  if (pushedDate !== today) return false;
+  const pushed = localStorage.getItem('triage_pushed');
+  if (!pushed) return false;
+  const saved = localStorage.getItem('triage_completed');
+  if (saved) completedIds = new Set(JSON.parse(saved));
+  return true;
+}
+
+function showExecute() {
+  const list = document.getElementById('executeList');
+  list.innerHTML = '';
+  completedIds = completedIds || new Set();
+
+  // Sort: incomplete first (by rank), completed at bottom
+  const incomplete = rankedTasks.filter(t => !completedIds.has(t.id));
+  const completed = rankedTasks.filter(t => completedIds.has(t.id));
+  const ordered = [...incomplete, ...completed];
+
+  const total = rankedTasks.length;
+  const doneCount = completedIds.size;
+
+  document.getElementById('doneCount').textContent = doneCount;
+  document.getElementById('totalCount').textContent = total;
+  document.getElementById('execDate').textContent = new Date().toLocaleDateString('en-US', {weekday:'short', month:'short', day:'numeric'});
+  document.getElementById('allDoneBanner').style.display = doneCount === total && total > 0 ? 'block' : 'none';
+
+  const third = Math.ceil(total / 3);
+  ordered.forEach(task => {
+    const rank = rankedTasks.indexOf(task);
+    const isDone = completedIds.has(task.id);
+    let tagClass, tagLabel;
+    if (rank < third) { tagClass = 'tag-p1'; tagLabel = 'P1'; }
+    else if (rank < third * 2) { tagClass = 'tag-p2'; tagLabel = 'P2'; }
+    else { tagClass = 'tag-p3'; tagLabel = 'P3'; }
+
+    const timeStr = task._scheduledTime
+      ? (() => { const [h,m] = task._scheduledTime.split(':').map(Number); return formatTime(h,m); })()
+      : '';
+
+    list.innerHTML += `
+      <div class="exec-item ${isDone ? 'done' : ''}" id="exec-${task.id}" onclick="toggleComplete('${task.id}')">
+        <div class="exec-check">${isDone ? '✓' : ''}</div>
+        <div class="exec-info">
+          <div class="exec-name">${task.content}</div>
+          <div class="exec-meta">
+            ${timeStr ? `<div class="exec-time">${timeStr}</div>` : ''}
+            <div class="exec-tag ${tagClass}">${tagLabel}</div>
+          </div>
+        </div>
+      </div>
+    `;
+  });
+
+  document.getElementById('execStatusBar').textContent = '';
+  showScreen('execute');
+}
+
+async function toggleComplete(taskId) {
+  const item = document.getElementById(`exec-${taskId}`);
+  const isNowDone = !completedIds.has(taskId);
+
+  if (isNowDone) {
+    completedIds.add(taskId);
+    item.classList.add('completing');
+    setTimeout(() => {
+      item.classList.remove('completing');
+      showExecute(); // re-render to sort completed to bottom
+    }, 300);
+
+    // Mark complete in Todoist
+    try {
+      await fetch(`https://api.todoist.com/rest/v2/tasks/${taskId}/close`, {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${apiToken}` }
+      });
+    } catch {
+      document.getElementById('execStatusBar').textContent = 'Todoist sync failed — will retry next time';
+    }
+  } else {
+    // Un-complete
+    completedIds.delete(taskId);
+    showExecute();
+
+    try {
+      await fetch(`https://api.todoist.com/rest/v2/tasks/${taskId}/reopen`, {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${apiToken}` }
+      });
+    } catch {}
+  }
+
+  saveExecuteState();
+}
+
+function resumeToExecute() {
+  const hasPushed = loadExecuteState();
+  if (hasPushed && rankedTasks.length > 0) {
+    showExecute();
+  } else {
+    resumeToSchedule();
+  }
+}
+
+function resumeToSchedule() {
+  document.getElementById('schedTaskCount').textContent = rankedTasks.length;
+  showScreen('schedule');
+}
+
+function resetApp() {
+  allTasks = [];
+  rankedTasks = [];
+  insertionList = [];
+  compareQueue = [];
+  roundCount = 0;
+  localStorage.removeItem('triage_ranked');
+  localStorage.removeItem('triage_date');
+  localStorage.removeItem('triage_pushed');
+  localStorage.removeItem('triage_pushed_date');
+  localStorage.removeItem('triage_completed');
+  completedIds = new Set();
+  document.getElementById('resumeBanner').style.display = 'none';
+  showScreen('setup');
+}
+
+// Init time calc on load
+window.addEventListener('load', updateTimeCalc);
+</script>
+</body>
+</html>
