@@ -945,9 +945,10 @@ async function fetchTasks() {
       throw new Error(tasksRes.status === 401 ? 'Invalid API token' : 'Failed to fetch tasks');
     }
 
-    const tasks = await tasksRes.json();
-    const projectList = await projectsRes.json();
-
+    const tasksData = await tasksRes.json();
+    const tasks = Array.isArray(tasksData) ? tasksData : (tasksData.results || []);
+    const projectData = await projectsRes.json();
+    const projectList = Array.isArray(projectData) ? projectData : (projectData.results || []);
     projectList.forEach(p => projects[p.id] = p.name);
 
     const today = new Date().toISOString().split('T')[0];
